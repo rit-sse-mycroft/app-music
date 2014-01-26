@@ -1,0 +1,15 @@
+{
+    "version": "0.0.1",
+    "name": "music",
+    "displayName": "Mycroft music player",
+    "instanceId": "music1",
+    "capabilities": {
+      "music": "0.0.1"
+      },
+    "API": 0,
+    "description": "",
+    "dependencies": {
+      "stt": "0.0.1",
+      "audioOutput": "0.0.1"
+    }
+}
