@@ -1,5 +1,6 @@
 require 'mycroft'
 require 'spotify'
+require 'highline/import'
 
 class Music < Mycroft::Client
 
@@ -13,6 +14,8 @@ class Music < Mycroft::Client
     @dependencies = {}
     @sent_grammar = false
     @status = 'down'
+    @username = ask("Enter your Spotify username:  ")
+    @password = ask("Enter your Spotify password:  ") { |q| q.echo = false }
     super
   end
 
