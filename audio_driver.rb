@@ -5,7 +5,7 @@ module Hallon
   # as a guide on how to write your own audio driver with Hallon.
   #
   # @note this class is not used by Hallon, and is only here for documentation purposes.
-  class ExampleAudioDriver
+  class AudioDriver
     # Here you can do your initialization of your audio driver. No
     # parameters are given, and at this point no information of the
     # audio format (or similar) is given.

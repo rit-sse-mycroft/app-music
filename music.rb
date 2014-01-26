@@ -1,6 +1,7 @@
 require 'mycroft'
 require 'hallon'
 require 'highline/import'
+require 'audio_driver'
 
 class Music < Mycroft::Client
 
@@ -69,7 +70,19 @@ class Music < Mycroft::Client
         @status = 'down'
       end
     elsif data[:type] == 'MSG_BROADCAST'
-
+      if data[:data]['grammar'] == 'music'
+        type = data[:data]['tags']['type']
+        media = data[:data]['tags']['media']
+        search = Hallon::Search.new(media)
+        puts "Searching for Media"
+        search.load
+        track = search.tracks[0].load
+        ipaddress = Socket::getaddrinfo(Socket.gethostname,"echo",Socket::AF_INET)[0][3]
+        port = 6666
+        query('audioOutput', 'stream_tts', { ip: ipaddress, port: 6666}, 30, ['speakers'])
+        player = Hallon::Player.new(Hallon::AudioDriver)
+        player.play!(track)
+      end
     end
   end
 
