@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<grammar xmlns="http://www.w3.org/2001/06/grammar" xml:lang="en-US" root="music" version="1.0" tag-format="semantics/1.0">
+  <rule id="type" scope="private">
+    <one-of>
+      <item>artist</item>
+      <item>song</item>
+      <item>album</item>
+      <item>playlist</item>
+    </one-of>
+  </rule>
+  <rule id="music" scope="private">
+    <item>Mycroft play the</item>
+    <ruleref uri="#type"/>
+    <tag>out.type=rules.type;</tag>
+    <ruleref special="GARBAGE"/>
+    <tag>out.media=rules.latest();</tag>
+    <item repeat="0-1">on spotify</item>
+  </rule>
+</grammar>
