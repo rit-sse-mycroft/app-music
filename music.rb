@@ -1,7 +1,7 @@
 require 'mycroft'
 require 'hallon'
 require 'highline/import'
-require 'audio_driver'
+require './audio_driver'
 
 class Music < Mycroft::Client
 
