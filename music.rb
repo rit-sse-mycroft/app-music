@@ -1,5 +1,5 @@
 require 'mycroft'
-require 'spotify'
+require 'hallon'
 require 'highline/import'
 
 class Music < Mycroft::Client
@@ -14,9 +14,35 @@ class Music < Mycroft::Client
     @dependencies = {}
     @sent_grammar = false
     @status = 'down'
-    @username = ask("Enter your Spotify username:  ")
-    @password = ask("Enter your Spotify password:  ") { |q| q.echo = false }
-    super
+    begin
+      app_key = IO::read('./spotify_appkey.key')
+      has_app_key = true
+    rescue
+      has_app_key = false
+    end
+    if has_app_key
+      username = ask("Enter your Spotify username:  ")
+      password = ask("Enter your Spotify password:  ") { |q| q.echo = false }
+      @session = Hallon::Session.initialize(app_key) do
+        on(:log_message) do |message|
+          puts "[LOG] #{message}"
+        end
+
+        on(:credentials_blob_updated) do |blob|
+          puts "[BLOB] #{blob}"
+        end
+
+        on(:connection_error) do |error|
+          Hallon::Error.maybe_raise(error)
+        end
+
+        on(:logged_out) do
+          abort "[FAIL] Logged out!"
+        end
+      end
+      @session.login!(username, password)
+      super
+    end
   end
 
   def connect
@@ -29,7 +55,7 @@ class Music < Mycroft::Client
       puts "Current status of dependencies"
       puts @dependencies
       if stt_up? and not @sent_grammar
-        data = {grammar: { name: 'joke', xml: File.read('./grammar.xml')}}
+        data = {grammar: { name: 'music', xml: File.read('./grammar.xml')}}
         query('stt', 'load_grammar', data)
         @sent_grammar = true
       elsif not stt_up? and @sent_grammar
@@ -42,6 +68,8 @@ class Music < Mycroft::Client
         down
         @status = 'down'
       end
+    elsif data[:type] == 'MSG_BROADCAST'
+
     end
   end
 
