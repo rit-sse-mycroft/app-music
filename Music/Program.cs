@@ -15,8 +15,40 @@ namespace Music
                 Console.WriteLine("Expected arguments in the form speechrecognizer host port");
                 return;
             }
-            var client = new MusicClient();
+            Console.WriteLine("Spotify Username: ");
+            string username = Console.ReadLine();
+            Console.WriteLine("Spotify Password: ");
+            string password = GetPassword();
+            var client = new MusicClient(username, password);
             client.Connect(args[0], args[1]);
         }
+
+        static string GetPassword()
+        {
+            string pwd = "";
+            while (true)
+            {
+                ConsoleKeyInfo i = Console.ReadKey(true);
+                if (i.Key == ConsoleKey.Enter)
+                {
+                    break;
+                }
+                else if (i.Key == ConsoleKey.Backspace)
+                {
+                    if (pwd.Length > 0)
+                    {
+                        pwd = pwd.Substring(0, pwd.Length - 1);
+                        Console.Write("\b \b");
+                    }
+                }
+                else
+                {
+                    pwd += i.Key;
+                    Console.Write("*");
+                }
+            }
+            return pwd;
+        }
+
     }
 }

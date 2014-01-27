@@ -16,15 +16,19 @@ namespace Music
         private string status;
         private bool sentGrammar;
         private string grammar;
+        private string username;
+        private string password;
 
-        public MusicClient() : base()
+        public MusicClient(string username, string password) : base()
         {
             stt = new Dictionary<string, string>();
             speakers = new Dictionary<string, string>();
             status = "down";
             sentGrammar = false;
-            var reader = new StreamReader("grammar.xml")
+            var reader = new StreamReader("grammar.xml");
             grammar = reader.ReadToEnd();
+            this.username = username;
+            this.password = password;
         }
 
         protected async override void Response(Mycroft.App.Message.APP_DEPENDENCY type, dynamic message)
