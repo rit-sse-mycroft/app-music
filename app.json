@@ -5,9 +5,9 @@
     "instanceId": "music1",
     "capabilities": {
       "music": "0.0.1"
-      },
+    },
     "API": 0,
-    "description": "",
+    "description": "Plays music and stuff",
     "dependencies": {
       "stt": "0.0.1",
       "audioOutput": "0.0.1"

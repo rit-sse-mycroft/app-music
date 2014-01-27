@@ -19,7 +19,7 @@ module MusicGrammar
       item 'Mycroft play the'
       reference 'type'
       tag 'out.type=rules.type;'
-      reference_wildcard
+      reference 'grammar:dictation'
       tag 'out.media=rules.latest();'
       item 'on spotify', repeat: "0-1"
     end

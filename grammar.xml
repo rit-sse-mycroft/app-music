@@ -12,7 +12,7 @@
     <item>Mycroft play the</item>
     <ruleref uri="#type"/>
     <tag>out.type=rules.type;</tag>
-    <ruleref special="GARBAGE"/>
+    <ruleref uri="grammar:dictation"/>
     <tag>out.media=rules.latest();</tag>
     <item repeat="0-1">on spotify</item>
   </rule>
