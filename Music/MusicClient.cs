@@ -51,7 +51,7 @@ namespace Music
             session.StopPlayback += session_StopPlayback;
         }
 
-        protected async override void Response(Mycroft.App.Message.APP_DEPENDENCY type, dynamic message)
+        protected async override void Response(APP_DEPENDENCY type, dynamic message)
         {
             if (message.ContainsKey("stt"))
             {
@@ -86,19 +86,24 @@ namespace Music
             }
         }
 
-        protected override void Response(Mycroft.App.Message.APP_MANIFEST_OK type, dynamic message)
+        protected override void Response(APP_MANIFEST_OK type, dynamic message)
         {
             InstanceId = message["instanceId"];
             Console.WriteLine("Recieved: " + type);
         }
 
-        protected async override void Response(Mycroft.App.Message.MSG_BROADCAST type, dynamic message)
+        protected async override void Response(MSG_BROADCAST type, dynamic message)
         {
             if (message["grammar"]["name"] == "music")
             {
                 var tags = message["grammar"]["tags"];
                 string query = tags["media"];
-                Search search = await session.SearchTracks(query, 0, 1);
+                if (tags["type"] == "song")
+                {
+                    Search search = await session.SearchTracks(query, 0, 1);
+                    Track track = search.Tracks[0].GetPlayable();
+                    session.Play(track);
+                }
             }
         }
 
