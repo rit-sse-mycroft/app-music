@@ -1,34 +1,17 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    ffi (1.9.3)
-    ffi (1.9.3-x86-mingw32)
-    hallon (0.18.2)
-      ffi (~> 1.8)
-      spotify (~> 12.5.1)
-      weak_observable (~> 1.0)
-    highline (1.6.20)
-    libspotify (12.1.51.3)
-    libspotify (12.1.51.3-x86-mingw32)
     mini_portile (0.5.2)
     nokogiri (1.6.1)
       mini_portile (~> 0.5.0)
     nokogiri (1.6.1-x86-mingw32)
       mini_portile (~> 0.5.0)
-    ref (1.0.5)
-    spotify (12.5.3)
-      ffi (~> 1.0, >= 1.0.11)
-      libspotify (~> 12.1.51)
     srgs (1.1.0)
       nokogiri
-    weak_observable (1.0.1)
-      ref (~> 1.0.0)
 
 PLATFORMS
   ruby
   x86-mingw32
 
 DEPENDENCIES
-  hallon
-  highline
   srgs (~> 1.1.0)
