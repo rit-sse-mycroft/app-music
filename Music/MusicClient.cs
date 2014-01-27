@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,6 +20,10 @@ namespace Music
         private bool sentGrammar;
         private string grammar;
         private Session session;
+        private TcpClient client;
+        private int port;
+        private string ipAddress;
+        private TcpListener listener;
 
         public MusicClient(Session session) : base()
         {
@@ -28,6 +34,21 @@ namespace Music
             var reader = new StreamReader("grammar.xml");
             grammar = reader.ReadToEnd();
             this.session = session;
+            WebRequest request = WebRequest.Create("http://checkip.dyndns.org/");
+            using (WebResponse response = request.GetResponse())
+            using (StreamReader stream = new StreamReader(response.GetResponseStream()))
+            {
+                ipAddress = stream.ReadToEnd();
+            }
+
+            //Search for the ip in the html
+            int first = ipAddress.IndexOf("Address: ") + 9;
+            int last = ipAddress.LastIndexOf("</body>");
+            ipAddress = ipAddress.Substring(first, last - first);
+            port = 6666;
+            session.MusicDelivered += session_MusicDelivered;
+            session.StartPlayback += session_StartPlayback;
+            session.StopPlayback += session_StopPlayback;
         }
 
         protected async override void Response(Mycroft.App.Message.APP_DEPENDENCY type, dynamic message)
@@ -71,9 +92,35 @@ namespace Music
             Console.WriteLine("Recieved: " + type);
         }
 
-        protected override void Response(Mycroft.App.Message.MSG_BROADCAST type, dynamic message)
+        protected async override void Response(Mycroft.App.Message.MSG_BROADCAST type, dynamic message)
         {
-            throw new NotImplementedException();
+            if (message["grammar"]["name"] == "music")
+            {
+                var tags = message["grammar"]["tags"];
+                string query = tags["media"];
+                Search search = await session.SearchTracks(query, 0, 1);
+            }
         }
+
+        private void session_MusicDelivered(Session sender, MusicDeliveryEventArgs e)
+        {
+            var stream = client.GetStream();
+            stream.Write(e.Samples, 0, e.Samples.Length);
+        }
+
+        private void session_StopPlayback(Session sender, SessionEventArgs e)
+        {
+            client.Close();
+            listener.Stop();
+        }
+
+        private async void session_StartPlayback(Session sender, SessionEventArgs e)
+        {
+            listener = new TcpListener(port);
+            listener.Start();
+            await SendJson("MSG_QUERY", new MessageQuery("audioOutput", "stream_tts", new { port = port, ip = ipAddress }, new string[] { "speakers" }, 30));
+            client = listener.AcceptTcpClient();
+        }
+
     }
 }
