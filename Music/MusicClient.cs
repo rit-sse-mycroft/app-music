@@ -1,5 +1,6 @@
 ﻿using Mycroft.App;
 using Mycroft.App.Message;
+using SpotiFire;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,10 +17,9 @@ namespace Music
         private string status;
         private bool sentGrammar;
         private string grammar;
-        private string username;
-        private string password;
+        private Session session;
 
-        public MusicClient(string username, string password) : base()
+        public MusicClient(Session session) : base()
         {
             stt = new Dictionary<string, string>();
             speakers = new Dictionary<string, string>();
@@ -27,8 +27,7 @@ namespace Music
             sentGrammar = false;
             var reader = new StreamReader("grammar.xml");
             grammar = reader.ReadToEnd();
-            this.username = username;
-            this.password = password;
+            this.session = session;
         }
 
         protected async override void Response(Mycroft.App.Message.APP_DEPENDENCY type, dynamic message)
