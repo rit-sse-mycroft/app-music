@@ -11,20 +11,23 @@
   <rule id="action" scope="private">
     <one-of>
       <item>play</item>
+      <item>add</item>
       <item>pause</item>
+      <item>clear queue</item>
     </one-of>
   </rule>
+  <rule id="music_control" scope="private">
+    <ruleref uri="#action"/>
+    <tag>out.action=rules.action</tag>
+  </rule>
   <rule id="music" scope="private">
-    <item>play the</item>
+    <ruleref uri="#music_control"/>
+    <item>the</item>
     <ruleref uri="#type"/>
     <tag>out.type=rules.type;</tag>
     <ruleref uri="grammar:dictation"/>
     <tag>out.media=rules.latest();</tag>
     <item repeat="0-1">on spotify</item>
-  </rule>
-  <rule id="music_control" scope="private">
-    <ruleref uri="#action"/>
-    <tag>out.action=rules.action</tag>
   </rule>
   <rule id="topLevel" scope="private">
     <item>Mycroft</item>

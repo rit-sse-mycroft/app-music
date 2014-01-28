@@ -18,22 +18,25 @@ module MusicGrammar
     private_rule 'action' do
       one_of do
         item 'play'
+        item 'add'
         item 'pause'
+        item 'clear queue'
       end
-    end
-
-    private_rule 'music' do
-      item 'play the'
-      reference 'type'
-      tag 'out.type=rules.type;'
-      reference 'grammar:dictation'
-      tag 'out.media=rules.latest();'
-      item 'on spotify', repeat: "0-1"
     end
 
     private_rule 'music_control' do
       reference 'action'
       tag 'out.action=rules.action'
+    end
+
+    private_rule 'music' do
+      reference 'music_control'
+      item 'the'
+      reference 'type'
+      tag 'out.type=rules.type;'
+      reference 'grammar:dictation'
+      tag 'out.media=rules.latest();'
+      item 'on spotify', repeat: "0-1"
     end
 
     private_rule 'topLevel' do
