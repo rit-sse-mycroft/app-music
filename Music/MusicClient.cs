@@ -1,5 +1,6 @@
 ﻿using Mycroft.App;
 using Mycroft.App.Message;
+using NAudio.Wave;
 using SpotiFire;
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,9 @@ namespace Music
         private int port;
         private string ipAddress;
         private TcpListener listener;
+        private WaveOut waveOut;
+        private BufferedWaveProvider waveProvider;
+        private string audioStatus = "";
 
         public MusicClient(Session session) : base()
         {
@@ -47,8 +51,14 @@ namespace Music
             ipAddress = ipAddress.Substring(first, last - first);
             port = 6666;
             session.MusicDelivered += session_MusicDelivered;
-            session.StartPlayback += session_StartPlayback;
-            session.StopPlayback += session_StopPlayback;
+            //session.StartPlayback += session_StartPlayback;
+            //session.StopPlayback += session_StopPlayback;
+
+            waveOut = new WaveOut();
+            waveProvider = new BufferedWaveProvider(new WaveFormat());
+            waveOut.Init(waveProvider);
+            waveOut.Play();
+
         }
 
         protected async override void Response(APP_DEPENDENCY type, dynamic message)
@@ -74,7 +84,7 @@ namespace Music
                 await SendData("APP_UP", "");
                 if (!sentGrammar)
                 {
-                    await SendJson("MSG_QUERY", new MessageQuery("stt", "load_grammar", new { name = "music", xml = grammar }, new string[] { }, 30));
+                    await SendJson("MSG_QUERY", new MessageQuery("stt", "load_grammar", new { grammar = new { name = "music", xml = grammar } }, new string[] { }, 30));
                     sentGrammar = true;
                 }
             }
@@ -94,37 +104,52 @@ namespace Music
 
         protected async override void Response(MSG_BROADCAST type, dynamic message)
         {
-            if (message["grammar"]["name"] == "music")
+            var content = message["content"];
+            if (content["grammar"] == "music")
             {
-                var tags = message["grammar"]["tags"];
+                var tags = content["tags"];
+                if (tags.ContainsKey("action"))
+                {
+                    if (tags["action"] == "play" || audioStatus == "paused")
+                    {
+                        session.PlayerPlay();
+                        audioStatus = "playing";
+                    }
+                    else if(tags["action"] == "pause" || audioStatus == "playing")
+                    {
+                        session.PlayerPause();
+                        audioStatus = "paused";
+                    }
+                }
                 string query = tags["media"];
                 if (tags["type"] == "song")
                 {
                     Search search = await session.SearchTracks(query, 0, 1);
-                    Track track = search.Tracks[0].GetPlayable();
+                    Track track = await search.Tracks[0].GetPlayable();
+                    //listener = new TcpListener(port);
+                    //listener.Start();
+                    await SendJson("MSG_QUERY", new MessageQuery("audioOutput", "stream_spotify", new { port = port, ip = ipAddress }, new string[] { "speakers" }, 30));
+                    //client = listener.AcceptTcpClient();
                     session.Play(track);
+                    audioStatus = "playing";
                 }
             }
         }
 
         private void session_MusicDelivered(Session sender, MusicDeliveryEventArgs e)
         {
-            var stream = client.GetStream();
-            stream.Write(e.Samples, 0, e.Samples.Length);
-        }
+            //e.ConsumedFrames = e.Frames;
+            //var stream = client.GetStream();
+            //stream.Write(e.Samples, 0, e.Samples.Length);
+            try
+            {
+                waveProvider.AddSamples(e.Samples, 0, e.Samples.Length);
+                e.ConsumedFrames = e.Frames;
+            }
+            catch
+            {
 
-        private void session_StopPlayback(Session sender, SessionEventArgs e)
-        {
-            client.Close();
-            listener.Stop();
-        }
-
-        private async void session_StartPlayback(Session sender, SessionEventArgs e)
-        {
-            listener = new TcpListener(port);
-            listener.Start();
-            await SendJson("MSG_QUERY", new MessageQuery("audioOutput", "stream_tts", new { port = port, ip = ipAddress }, new string[] { "speakers" }, 30));
-            client = listener.AcceptTcpClient();
+            }
         }
 
     }
