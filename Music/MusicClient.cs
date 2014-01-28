@@ -28,6 +28,7 @@ namespace Music
         private WaveOut waveOut;
         private BufferedWaveProvider waveProvider;
         private string audioStatus = "";
+        private PlayQueue queue;
 
         public MusicClient(Session session) : base()
         {
@@ -51,6 +52,7 @@ namespace Music
             ipAddress = ipAddress.Substring(first, last - first);
             port = 6666;
             session.MusicDelivered += session_MusicDelivered;
+            session.EndOfTrack += session_EndOfTrack;
             //session.StartPlayback += session_StartPlayback;
             //session.StopPlayback += session_StopPlayback;
 
@@ -112,26 +114,31 @@ namespace Music
                 {
                     if (tags["action"] == "play" || audioStatus == "paused")
                     {
+                        waveOut.Play();
                         session.PlayerPlay();
                         audioStatus = "playing";
                     }
-                    else if(tags["action"] == "pause" || audioStatus == "playing")
+                    else if (tags["action"] == "pause" || audioStatus == "playing")
                     {
                         session.PlayerPause();
+                        waveOut.Pause();
                         audioStatus = "paused";
                     }
                 }
-                string query = tags["media"];
-                if (tags["type"] == "song")
+                else
                 {
-                    Search search = await session.SearchTracks(query, 0, 1);
-                    Track track = await search.Tracks[0].GetPlayable();
-                    //listener = new TcpListener(port);
-                    //listener.Start();
-                    await SendJson("MSG_QUERY", new MessageQuery("audioOutput", "stream_spotify", new { port = port, ip = ipAddress }, new string[] { "speakers" }, 30));
-                    //client = listener.AcceptTcpClient();
-                    session.Play(track);
-                    audioStatus = "playing";
+                    string query = tags["media"];
+                    if (tags["type"] == "song")
+                    {
+                        Search search = await session.SearchTracks(query, 0, 1);
+                        Track track = await search.Tracks[0].GetPlayable();
+                        //listener = new TcpListener(port);
+                        //listener.Start();
+                        await SendJson("MSG_QUERY", new MessageQuery("audioOutput", "stream_spotify", new { port = port, ip = ipAddress }, new string[] { "speakers" }, 30));
+                        //client = listener.AcceptTcpClient();
+                        session.Play(track);
+                        audioStatus = "playing";
+                    }
                 }
             }
         }
@@ -150,6 +157,11 @@ namespace Music
             {
 
             }
+        }
+
+        private void session_EndOfTrack(Session sender, SessionEventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
     }

@@ -18,7 +18,7 @@
     <item>play the</item>
     <ruleref uri="#type"/>
     <tag>out.type=rules.type;</tag>
-    <ruleref uri="#grammar:dictation"/>
+    <ruleref uri="grammar:dictation"/>
     <tag>out.media=rules.latest();</tag>
     <item repeat="0-1">on spotify</item>
   </rule>
