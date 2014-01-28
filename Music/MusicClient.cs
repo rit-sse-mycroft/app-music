@@ -28,7 +28,7 @@ namespace Music
         private WaveOut waveOut;
         private BufferedWaveProvider waveProvider;
         private string audioStatus = "";
-        private PlayQueue queue;
+        private List<Track> queue;
 
         public MusicClient(Session session) : base()
         {
@@ -138,6 +138,7 @@ namespace Music
                         //client = listener.AcceptTcpClient();
                         session.Play(track);
                         audioStatus = "playing";
+                        queue.In
                     }
                 }
             }
@@ -161,7 +162,14 @@ namespace Music
 
         private void session_EndOfTrack(Session sender, SessionEventArgs e)
         {
-            throw new NotImplementedException();
+            if (queue.Count() != 0)
+            {
+                var track = queue[0];
+                queue.RemoveAt(0);
+                session.PlayerUnload();
+                session.PlayerLoad(track);
+                session.PlayerPlay();
+            }
         }
 
     }
