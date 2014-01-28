@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<grammar xmlns="http://www.w3.org/2001/06/grammar" xml:lang="en-US" root="music" version="1.0" tag-format="semantics/1.0">
+<grammar xmlns="http://www.w3.org/2001/06/grammar" xml:lang="en-US" root="topLevel" version="1.0" tag-format="semantics/1.0">
   <rule id="type" scope="private">
     <one-of>
       <item>artist</item>
@@ -8,12 +8,33 @@
       <item>playlist</item>
     </one-of>
   </rule>
+  <rule id="action" scope="private">
+    <one-of>
+      <item>play</item>
+      <item>pause</item>
+    </one-of>
+  </rule>
   <rule id="music" scope="private">
-    <item>Mycroft play the</item>
+    <item>play the</item>
     <ruleref uri="#type"/>
     <tag>out.type=rules.type;</tag>
-    <ruleref uri="grammar:dictation"/>
+    <ruleref uri="#grammar:dictation"/>
     <tag>out.media=rules.latest();</tag>
     <item repeat="0-1">on spotify</item>
+  </rule>
+  <rule id="music_control" scope="private">
+    <ruleref uri="#action"/>
+    <tag>out.action=rules.action</tag>
+  </rule>
+  <rule id="topLevel" scope="private">
+    <item>Mycroft</item>
+    <one-of>
+      <item>
+        <ruleref uri="#music"/>
+      </item>
+      <item>
+        <ruleref uri="#music_control"/>
+      </item>
+    </one-of>
   </rule>
 </grammar>
