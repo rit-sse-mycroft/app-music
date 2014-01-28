@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 
 namespace Music
 {
+    enum AudioStatus { Playing, Paused, Stopped };
     class MusicClient : Client
     {
         private Dictionary<string, string> stt;
@@ -27,7 +28,7 @@ namespace Music
         private TcpListener listener;
         private WaveOut waveOut;
         private BufferedWaveProvider waveProvider;
-        private string audioStatus = "";
+        private AudioStatus audioStatus;
         private List<Track> queue;
 
         public MusicClient(Session session) : base()
@@ -60,6 +61,7 @@ namespace Music
             waveProvider = new BufferedWaveProvider(new WaveFormat());
             waveOut.Init(waveProvider);
             waveOut.Play();
+            audioStatus = AudioStatus.Stopped;
 
         }
 
@@ -110,19 +112,23 @@ namespace Music
             if (content["grammar"] == "music")
             {
                 var tags = content["tags"];
-                if (tags.ContainsKey("action"))
+                if (!tags.ContainKey("type"))
                 {
-                    if (tags["action"] == "play" || audioStatus == "paused")
+                    if (tags["action"] == "play" || audioStatus == AudioStatus.Paused)
                     {
                         waveOut.Play();
                         session.PlayerPlay();
-                        audioStatus = "playing";
+                        audioStatus = AudioStatus.Playing;
                     }
-                    else if (tags["action"] == "pause" || audioStatus == "playing")
+                    else if (tags["action"] == "pause" || audioStatus == AudioStatus.Playing)
                     {
                         session.PlayerPause();
                         waveOut.Pause();
-                        audioStatus = "paused";
+                        audioStatus = AudioStatus.Paused;
+                    }
+                    else if (tags["action"] == "clear queue")
+                    {
+                        queue.Clear();
                     }
                 }
                 else
@@ -136,9 +142,19 @@ namespace Music
                         //listener.Start();
                         await SendJson("MSG_QUERY", new MessageQuery("audioOutput", "stream_spotify", new { port = port, ip = ipAddress }, new string[] { "speakers" }, 30));
                         //client = listener.AcceptTcpClient();
-                        session.Play(track);
-                        audioStatus = "playing";
-                        queue.In
+                        if (tags["action"] == "play")
+                        {
+                            session.Play(track);
+                            audioStatus = AudioStatus.Playing;
+                        }
+                        else if (tags["action"] == "add")
+                        {
+                            if (audioStatus == AudioStatus.Stopped)
+                                session.Play(track);
+                                audioStatus = AudioStatus.Playing;
+                            else
+                                queue.Add(track);
+                        }   
                     }
                 }
             }
@@ -162,6 +178,7 @@ namespace Music
 
         private void session_EndOfTrack(Session sender, SessionEventArgs e)
         {
+            audioStatus = AudioStatus.Stopped;
             if (queue.Count() != 0)
             {
                 var track = queue[0];
@@ -169,6 +186,7 @@ namespace Music
                 session.PlayerUnload();
                 session.PlayerLoad(track);
                 session.PlayerPlay();
+                audioStatus = AudioStatus.Playing;
             }
         }
 
