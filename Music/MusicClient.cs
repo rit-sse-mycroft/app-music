@@ -179,34 +179,40 @@ namespace Music
             }
             else if (tags["action"] == "next")
             {
-                waveProvider.ClearBuffer();
-                NextSong();
+                if (!queue.IsEmpty())
+                {
+                    waveProvider.ClearBuffer();
+                    NextSong();
+                }
             }
         }
 
         private async void HandleSongs(string query, dynamic tags)
         {
             Search search = await session.SearchTracks(query, 0, 1);
-            Track track = await search.Tracks[0];
-            //listener = new TcpListener(port);
-            //listener.Start();
-            await SendJson("MSG_QUERY", new MessageQuery("audioOutput", "stream_spotify", new { port = port, ip = ipAddress }, new string[] { "speakers" }, 30));
-            //client = listener.AcceptTcpClient();
-            if (tags["action"] == "play")
+            if (search.TotalTracks != 0)
             {
-                session.Play(queue.PlayTrack(track));
-                audioStatus = AudioStatus.Playing;
-            }
-            else if (tags["action"] == "add")
-            {
-                if (audioStatus == AudioStatus.Stopped)
+                Track track = await search.Tracks[0];
+                //listener = new TcpListener(port);
+                //listener.Start();
+                await SendJson("MSG_QUERY", new MessageQuery("audioOutput", "stream_spotify", new { port = port, ip = ipAddress }, new string[] { "speakers" }, 30));
+                //client = listener.AcceptTcpClient();
+                if (tags["action"] == "play")
                 {
                     session.Play(queue.PlayTrack(track));
                     audioStatus = AudioStatus.Playing;
                 }
-                else
+                else if (tags["action"] == "add")
                 {
-                    queue.AddTrack(track);
+                    if (audioStatus == AudioStatus.Stopped)
+                    {
+                        session.Play(queue.PlayTrack(track));
+                        audioStatus = AudioStatus.Playing;
+                    }
+                    else
+                    {
+                        queue.AddTrack(track);
+                    }
                 }
             }
         }
@@ -214,22 +220,25 @@ namespace Music
         private async void HandleAlbums(string query, dynamic tags)
         {
             Search search = await session.SearchAlbums(query, 0, 1);
-            Album album = await search.Albums[0];
-            if (tags["action"] == "play")
+            if (search.TotalAlbums != 0)
             {
-                session.Play(await queue.PlayAlbum(album));
-                audioStatus = AudioStatus.Playing;
-            }
-            else if (tags["action"] == "add")
-            {
-                if (audioStatus == AudioStatus.Stopped)
+                Album album = await search.Albums[0];
+                if (tags["action"] == "play")
                 {
                     session.Play(await queue.PlayAlbum(album));
                     audioStatus = AudioStatus.Playing;
                 }
-                else
+                else if (tags["action"] == "add")
                 {
-                    queue.AddAlbum(album);
+                    if (audioStatus == AudioStatus.Stopped)
+                    {
+                        session.Play(await queue.PlayAlbum(album));
+                        audioStatus = AudioStatus.Playing;
+                    }
+                    else
+                    {
+                        queue.AddAlbum(album);
+                    }
                 }
             }
         }
