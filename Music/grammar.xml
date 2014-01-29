@@ -14,6 +14,7 @@
       <item>add</item>
       <item>pause</item>
       <item>clear queue</item>
+      <item>next</item>
     </one-of>
   </rule>
   <rule id="music_control" scope="private">

@@ -147,12 +147,17 @@ namespace Music
             audioStatus = AudioStatus.Stopped;
             if (!queue.IsEmpty())
             {
-                var track = queue.Dequeue();
-                session.PlayerUnload();
-                session.PlayerLoad(track);
-                session.PlayerPlay();
-                audioStatus = AudioStatus.Playing;
+                NextSong();
             }
+        }
+
+        private void NextSong()
+        {
+            Track track = queue.Dequeue();
+            session.PlayerUnload();
+            session.PlayerLoad(track);
+            session.PlayerPlay();
+            audioStatus = AudioStatus.Playing;
         }
         private void HandleCommands(dynamic tags)
         {
@@ -172,12 +177,17 @@ namespace Music
             {
                 queue.Clear();
             }
+            else if (tags["action"] == "next")
+            {
+                waveProvider.ClearBuffer();
+                NextSong();
+            }
         }
 
         private async void HandleSongs(string query, dynamic tags)
         {
             Search search = await session.SearchTracks(query, 0, 1);
-            Track track = await search.Tracks[0].GetPlayable();
+            Track track = await search.Tracks[0];
             //listener = new TcpListener(port);
             //listener.Start();
             await SendJson("MSG_QUERY", new MessageQuery("audioOutput", "stream_spotify", new { port = port, ip = ipAddress }, new string[] { "speakers" }, 30));

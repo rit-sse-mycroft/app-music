@@ -21,6 +21,7 @@ module MusicGrammar
         item 'add'
         item 'pause'
         item 'clear queue'
+        item 'next'
       end
     end
 
