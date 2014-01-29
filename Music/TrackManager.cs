@@ -26,7 +26,7 @@ namespace Music
 
         public Track PlayTrack(Track track)
         {
-            AddTrack(track);
+            tracks.Insert(0, track);
             return Dequeue();
         }
 
@@ -39,7 +39,9 @@ namespace Music
 
         public async Task<Track> PlayAlbum(Album album)
         {
-            await AddAlbum(album);
+            AlbumBrowse b = await album.Browse();
+            IList<Track> t = b.Tracks;
+            tracks.InsertRange(0, t);
             return Dequeue();
         }
 
