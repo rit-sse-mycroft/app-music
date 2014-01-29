@@ -30,16 +30,16 @@ namespace Music
             return Dequeue();
         }
 
-        public async void AddAlbum(Album album)
+        public async Task AddAlbum(Album album)
         {
             AlbumBrowse b = await album.Browse();
             IList<Track> t = b.Tracks;
             tracks.AddRange(t);
         }
 
-        public Track PlayAlbum(Album album)
+        public async Task<Track> PlayAlbum(Album album)
         {
-            AddAlbum(album);
+            await AddAlbum(album);
             return Dequeue();
         }
 
@@ -59,6 +59,22 @@ namespace Music
                     break;
             }
             return track;
+        }
+
+        public bool IsEmpty()
+        {
+            return tracks.Count() == 0;
+        }
+
+        public void Clear()
+        {
+            tracks.Clear();
+        }
+
+        public Mode CurrentMode
+        {
+            set { currentMode = value; }
+            get { return currentMode; }
         }
     }
 }

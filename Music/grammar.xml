@@ -21,7 +21,8 @@
     <tag>out.action=rules.action</tag>
   </rule>
   <rule id="music" scope="private">
-    <ruleref uri="#music_control"/>
+    <ruleref uri="#action"/>
+    <tag>out.action=rules.action</tag>
     <item>the</item>
     <ruleref uri="#type"/>
     <tag>out.type=rules.type;</tag>
