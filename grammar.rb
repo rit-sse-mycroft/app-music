@@ -30,7 +30,8 @@ module MusicGrammar
     end
 
     private_rule 'music' do
-      reference 'music_control'
+      reference 'action'
+      tag 'out.action=rules.action'
       item 'the'
       reference 'type'
       tag 'out.type=rules.type;'
