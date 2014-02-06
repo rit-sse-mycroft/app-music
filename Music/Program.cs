@@ -31,7 +31,7 @@ namespace Music
             if (result == Error.OK)
             {
                 Console.WriteLine("Successfully Logged In!");
-                var client = new MusicClient(session);
+                var client = new MusicClient(session, "app.json");
                 client.Connect(args[0], args[1]);
             }
             else

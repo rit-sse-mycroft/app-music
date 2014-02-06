@@ -1,5 +1,4 @@
 ﻿using Mycroft.App;
-using Mycroft.App.Message;
 using SpotiFire;
 using System;
 using System.Collections.Generic;
@@ -12,7 +11,13 @@ using System.Threading.Tasks;
 
 namespace Music
 {
+    /// <summary>
+    /// Enum for the current status of audio
+    /// </summary>
     enum AudioStatus { Playing, Paused, Stopped };
+    /// <summary>
+    /// The Music Client Claas
+    /// </summary>
     class MusicClient : Client
     {
         private Dictionary<string, string> stt;
@@ -28,7 +33,12 @@ namespace Music
         private AudioStatus audioStatus;
         private TrackManager queue;
 
-        public MusicClient(Session session) : base()
+        /// <summary>
+        /// Constructor for a music client
+        /// </summary>
+        /// <param name="session">The spotify session</param>
+        /// <param name="manifest">The path to app manifest</param>
+        public MusicClient(Session session, string manifest) : base(manifest)
         {
             stt = new Dictionary<string, string>();
             speakers = new Dictionary<string, string>();
@@ -51,9 +61,17 @@ namespace Music
             port = 6666;
             session.MusicDelivered += session_MusicDelivered;
             session.EndOfTrack += session_EndOfTrack;
+            handler.On("APP_MANIFEST_OK", AppManifestOk);
+            handler.On("APP_DEPENDENCY", AppDependency);
+            handler.On("MSG_BROADCAST", MsgBroadcast);
         }
 
-        protected async override void Response(APP_DEPENDENCY type, dynamic message)
+        #region Message Handlers
+        /// <summary>
+        /// Called when APP_DEPENDENCY is received
+        /// </summary>
+        /// <param name="message">the message received</param>
+        protected async void AppDependency(dynamic message)
         {
             if (message.ContainsKey("stt"))
             {
@@ -73,17 +91,17 @@ namespace Music
             }
             if (status == "down" && stt.ContainsKey("stt1") && stt["stt1"] == "up" && speakers.ContainsKey("speakers") && speakers["speakers"] == "up")
             {
-                await SendData("APP_UP", "");
+                await Up();
                 if (!sentGrammar)
                 {
-                    await SendJson("MSG_QUERY", new MessageQuery("stt", "load_grammar", new { grammar = new { name = "music", xml = grammar } }, new string[] { }, 30));
+                    await Query("stt", "load_grammar", new { grammar = new { name = "music", xml = grammar } });
                     sentGrammar = true;
                 }
             }
             else if (status == "up" && (stt["stt1"] == "down" || speakers["speakers"] == "down"))
             {
-                await SendData("APP_DOWN", "");
-                await SendJson("MSG_QUERY", new MessageQuery("stt", "unload_gramamr", new { grammar = "music" }, new string[] { }, 30));
+                await Down();
+                await Query("stt", "unload_gramamr", new { grammar = "music" });
                 sentGrammar = false;
                 if (speakers["speakers"] == "down" && listener != null)
                 {
@@ -94,13 +112,20 @@ namespace Music
             }
         }
 
-        protected override void Response(APP_MANIFEST_OK type, dynamic message)
+        /// <summary>
+        /// Called when APP_MANIFEST_OK is received
+        /// </summary>
+        /// <param name="message">the message received</param>
+        protected void AppManifestOk(dynamic message)
         {
             InstanceId = message["instanceId"];
-            Console.WriteLine("Recieved: " + type);
         }
 
-        protected async override void Response(MSG_BROADCAST type, dynamic message)
+        /// <summary>
+        /// Called when MSG_BROADCAST is received
+        /// </summary>
+        /// <param name="message">The message received</param>
+        protected async override void MsgBroadcast(dynamic message)
         {
             var content = message["content"];
             if (content["grammar"] == "music")
@@ -120,7 +145,13 @@ namespace Music
                 }
             }
         }
-
+        #endregion
+        #region Music Handlers
+        /// <summary>
+        /// Called when music is delievered
+        /// </summary>
+        /// <param name="sender"The sender</param>
+        /// <param name="e">The music being delievered</param>
         private void session_MusicDelivered(Session sender, MusicDeliveryEventArgs e)
         {
             e.ConsumedFrames = e.Frames;
@@ -128,6 +159,11 @@ namespace Music
             stream.Write(e.Samples, 0, e.Samples.Length);
         }
 
+        /// <summary>
+        /// Called when a track is finished. 
+        /// </summary>
+        /// <param name="sender">The sender</param>
+        /// <param name="e">The event args</param>
         private void session_EndOfTrack(Session sender, SessionEventArgs e)
         {
             audioStatus = AudioStatus.Stopped;
@@ -137,6 +173,9 @@ namespace Music
             }
         }
 
+        /// <summary>
+        /// Plays the next song in the play queue
+        /// </summary>
         private void NextSong()
         {
             Track track = queue.Dequeue();
@@ -145,6 +184,12 @@ namespace Music
             session.PlayerPlay();
             audioStatus = AudioStatus.Playing;
         }
+        #endregion
+        #region Helpers
+        /// <summary>
+        /// Helper for handling music player commands
+        /// </summary>
+        /// <param name="tags">The tags received from STT</param>
         private void HandleCommands(dynamic tags)
         {
             if (tags["action"] == "play" && audioStatus == AudioStatus.Paused)
@@ -170,6 +215,11 @@ namespace Music
             }
         }
 
+        /// <summary>
+        /// Helper for handling song commands
+        /// </summary>
+        /// <param name="query">The song requested</param>
+        /// <param name="tags">the matched tags from stt</param>
         private async void HandleSongs(string query, dynamic tags)
         {
             Search search = await session.SearchTracks(query, 0, 1);
@@ -180,7 +230,7 @@ namespace Music
                 {
                     listener = new TcpListener(port);
                     listener.Start();
-                    await SendJson("MSG_QUERY", new MessageQuery("audioOutput", "stream_spotify", new { port = port, ip = ipAddress }, new string[] { "speakers" }, 30));
+                    await Query("audioOutput", "stream_spotify", new { port = port, ip = ipAddress }, new string[] { "speakers" });
                     client = listener.AcceptTcpClient();
                 }
                 if (tags["action"] == "play")
@@ -203,6 +253,11 @@ namespace Music
             }
         }
 
+        /// <summary>
+        /// Helper for handling album commands
+        /// </summary>
+        /// <param name="query">The album to search for</param>
+        /// <param name="tags">The tags from STT</param>
         private async void HandleAlbums(string query, dynamic tags)
         {
             Search search = await session.SearchAlbums(query, 0, 1);
@@ -213,7 +268,7 @@ namespace Music
                 {
                     listener = new TcpListener(port);
                     listener.Start();
-                    await SendJson("MSG_QUERY", new MessageQuery("audioOutput", "stream_spotify", new { port = port, ip = ipAddress }, new string[] { "speakers" }, 30));
+                    await Query("audioOutput", "stream_spotify", new { port = port, ip = ipAddress }, new string[] { "speakers" });
                     client = listener.AcceptTcpClient();
                 }
                 if (tags["action"] == "play")
@@ -235,5 +290,6 @@ namespace Music
                 }
             }
         }
+        #endregion
     }
 }

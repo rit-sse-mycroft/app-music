@@ -50,8 +50,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Client.cs" />
-    <Compile Include="Messages.cs" />
-    <Compile Include="MessageType.cs" />
+    <Compile Include="Logger.cs" />
+    <Compile Include="MessageEventHandler.cs" />
     <Compile Include="MusicClient.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
